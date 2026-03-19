@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Portfolio OS 3D | Walterlin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --bg: #00000f;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── CANVAS ── */
+    #webgl {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      z-index: 0;
+    }
+
+    /* ── LOADING ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      gap: 16px;
+      transition: opacity 0.9s ease;
+    }
+    #loading p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+    .loading-bar-bg {
+      width: 200px; height: 1px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px; overflow: hidden;
+    }
+    .loading-bar-fill {
+      height: 100%; width: 0%;
+      background: var(--cyan);
+      transition: width 0.3s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+
+    /* ══════════════════════════════════════
+       HERO — nova estrutura
+    ══════════════════════════════════════ */
+    #hero-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 36px;
+      pointer-events: none;
+    }
+
+    .hero-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+    .hero-logo strong {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .hero-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+    .hero-status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #00ff8c;
+      box-shadow: 0 0 8px #00ff8c;
+      animation: pulse-green 2s ease-in-out infinite;
+    }
+    @keyframes pulse-green {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%       { opacity:0.4; transform:scale(1.5); }
+    }
+
+    #hero-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 0 36px 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .hero-bottom-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hero-name {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(2.4rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      background: linear-gradient(130deg, #ffffff 30%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+
+    #typed-role {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+      color: var(--cyan);
+      min-height: 1.2em;
+      letter-spacing: 0.05em;
+    }
+    #typed-role::after {
+      content: '|';
+      animation: blink 0.75s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .hero-bottom-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid rgba(0,212,255,0.25);
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(0,5,20,0.6);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.4), transparent);
+      align-self: center;
+      margin: 0 auto;
+    }
+
+    #scroll-hint {
+      position: fixed;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 11;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #scroll-hint span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+    .scroll-box {
+      width: 18px; height: 28px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex; justify-content: center;
+      padding-top: 4px;
+    }
+    .scroll-dot {
+      width: 2px; height: 2px;
+      background: var(--cyan);
+      border-radius: 50%;
+      animation: sdot 1.6s ease-in-out infinite;
+    }
+    @keyframes sdot {
+      0%  { transform:translateY(0);    opacity:1; }
+      80% { transform:translateY(10px); opacity:0; }
+      100%{ transform:translateY(0);    opacity:0; }
+    }
+
+    #watermark {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      text-align: right;
+      background: linear-gradient(130deg, rgba(255,255,255,0.6) 0%, rgba(0,212,255,0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      will-change: transform, font-size, opacity;
+      opacity: 0;
+      bottom: 20px;
+      right: 20px;
+      font-size: 13px;
+    }
+
+    .hero-side-line {
+      position: fixed;
+      left: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .side-line-bar {
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.3), transparent);
+    }
+    .side-line-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    /* ── MAIN ── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding-top: 100vh;
+    }
+
+    .section {
+      padding: 100px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 24px;
+      text-align: center;
+      background: rgba(0,0,14,0.65);
+      backdrop-filter: blur(4px);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      opacity: 0.7;
+    }
+    .section h2 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .section h2 span { color: var(--cyan); }
+    .section > p {
+      max-width: 580px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.85;
+    }
+
+    /* ── COMPETÊNCIAS ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .card {
+      background: rgba(0,212,255,0.04);
+      border: 1px solid rgba(0,212,255,0.12);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: left;
+      transition: border-color 0.3s, transform 0.3s, background 0.3s;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg,transparent,var(--cyan),transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .card:hover { border-color:rgba(0,212,255,0.35); background:rgba(0,212,255,0.07); transform:translateY(-4px); }
+    .card:hover::before { opacity: 1; }
+    .card-icon { font-size: 2rem; margin-bottom: 14px; display: block; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+    .card p { font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.7; }
+    .card-tag {
+      display: inline-block; margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cyan);
+      border: 1px solid rgba(0,212,255,0.25);
+      padding: 3px 10px; border-radius: 999px;
+    }
+
+    /* ── PROJETOS ── */
+    .projects-wrapper {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .project-card {
+      background: rgba(0,5,20,0.7);
+      border: 1px solid rgba(0,212,255,0.12);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .project-card:hover { border-color: rgba(0,212,255,0.3); }
+    .project-card-header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .project-card-header-left { flex: 1; min-width: 200px; }
+    .project-category {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--cyan);
+      opacity: 0.75; margin-bottom: 8px; display: block;
+    }
+    .project-card-header h3 {
+      font-size: clamp(1.3rem, 3vw, 1.8rem);
+      font-weight: 900; letter-spacing: -0.03em; margin-bottom: 6px;
+    }
+    .project-subtitle {
+      font-size: 0.9rem; color: rgba(255,255,255,0.45);
+      line-height: 1.5; max-width: 440px;
+    }
+    .project-status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 2px;
+      text-transform: uppercase; padding: 5px 14px;
+      border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+    }
+    .status-done { background:rgba(0,255,140,0.08); border:1px solid rgba(0,255,140,0.25); color:#00ff8c; }
+    .status-wip  { background:rgba(255,180,0,0.08);  border:1px solid rgba(255,180,0,0.25);  color:#ffb400; }
+    .status-live { background:rgba(0,212,255,0.08);  border:1px solid rgba(0,212,255,0.3);   color:var(--cyan); }
+    .status-live::before { content:'● '; animation:blink 1.4s step-end infinite; }
+
+    .project-card-body {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 0;
+    }
+    @media(max-width:760px){ .project-card-body{ grid-template-columns:1fr; } }
+
+    .project-text {
+      padding: 28px 32px;
+      display: flex; flex-direction: column; gap: 20px;
+      border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    @media(max-width:760px){ .project-text{ border-right:none; border-bottom:1px solid rgba(255,255,255,0.05); } }
+    .project-text p { font-size:0.88rem; color:rgba(255,255,255,0.5); line-height:1.85; }
+
+    .project-bullets { list-style:none; display:flex; flex-direction:column; gap:8px; }
+    .project-bullets li {
+      font-size:0.82rem; color:rgba(255,255,255,0.55);
+      padding-left:16px; position:relative; line-height:1.5;
+    }
+    .project-bullets li::before { content:'→'; position:absolute; left:0; color:var(--cyan); font-size:0.7rem; }
+
+    .project-made-by {
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.65rem; letter-spacing:1px;
+      color:rgba(255,255,255,0.25);
+      border-top:1px solid rgba(255,255,255,0.05);
+      padding-top:14px; line-height:1.7;
+    }
+    .project-made-by strong { color:rgba(255,255,255,0.5); font-weight:600; }
+
+    .tech-stack { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+    .tech-tag {
+      font-family:'JetBrains Mono',monospace; font-size:0.55rem; letter-spacing:1px;
+      color:rgba(255,255,255,0.35); background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.07); padding:3px 8px; border-radius:999px;
+    }
+
+    .project-mockups { padding:24px; display:flex; justify-content:center; align-items:center; width: 100%; }
+
+    /* ── CONFIGURAÇÕES DOS MOCKUPS ── */
+    .mockups-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      width: 100%;
+    }
+    .mockups-top {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      align-items: flex-end; 
+      justify-content: center;
+      width: 100%;
+    }
+
+    .mockup-device {
+      position:relative; border-radius:10px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.07);
+      padding:6px; overflow:hidden;
+    }
+    
+    .mockup-device.desktop { aspect-ratio:16/9; width: 100%; max-width: 480px; }
+    .mockup-device.tablet  { aspect-ratio:3/4; width: 45%; max-width: 200px; }
+    .mockup-device.mobile  { aspect-ratio:9/19; width: 25%; max-width: 100px; }
+
+    .mockup-frame {
+      width:100%; height:100%; border-radius:6px;
+      overflow:hidden; background:#03030f;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .mockup-frame img, .mockup-frame video { width:100%; height:100%; object-fit:cover; display:block; }
+
+    .mockup-placeholder {
+      width:100%; height:100%;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:6px; padding:8px;
+    }
+    .mockup-placeholder span { font-size:1.2rem; opacity:0.3; }
+    .mockup-placeholder p {
+      font-family:'JetBrains Mono',monospace; font-size:0.45rem;
+      letter-spacing:1px; text-transform:uppercase;
+      color:rgba(255,255,255,0.2); text-align:center;
+    }
+    .mockup-label {
+      position:absolute; left:6px; bottom:5px;
+      font-family:'JetBrains Mono',monospace; font-size:0.45rem;
+      letter-spacing:1px; text-transform:uppercase;
+      color:rgba(255,255,255,0.4); background:rgba(0,0,0,0.5);
+      padding:2px 6px; border-radius:999px;
+    }
+
+    /* ── GALERIA EMPILHADA (De Olho na Ilha & SIC-DO) ── */
+    .stacked-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+    .stacked-gallery .mockup-device.desktop {
+      max-width: 100%; /* Permite que ocupe todo o espaço disponível do container */
+    }
+
+    /* ── CONFIGURAÇÕES DOS VÍDEOS ── */
+    .vfx-gallery {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .video-frame {
+      flex: 1;
+      min-width: 250px;
+      aspect-ratio: 16/9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #03030f;
+      border: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .video-frame.vertical {
+      flex: 0 0 auto;
+      aspect-ratio: 9/16;
+      max-width: 240px; 
+      margin: 0 auto;
+    }
+
+    .video-frame iframe { width:100%; height:100%; border:none; }
+    
+    .video-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .video-frame video:hover {
+      opacity: 0.85;
+    }
+
+    /* Estilo para vídeos clicáveis dentro de frames de mockup */
+    .mockup-frame video {
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    .mockup-frame video:hover {
+      opacity: 0.85;
+    }
+
+    /* ── REVEAL ── */
+    .reveal { opacity:0; transform:translateY(36px); transition:opacity 0.8s ease,transform 0.8s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* ── CONTACT ── */
+    .contact-links { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+    .contact-btn {
+      font-family:'JetBrains Mono',monospace; font-size:0.75rem;
+      letter-spacing:2px; text-transform:uppercase; color:var(--cyan);
+      border:1px solid rgba(0,212,255,0.3); padding:10px 24px;
+      border-radius:999px; text-decoration:none;
+      transition:background 0.3s,border-color 0.3s,box-shadow 0.3s;
+      background:rgba(0,212,255,0.04); pointer-events:all;
+    }
+    .contact-btn:hover { background:rgba(0,212,255,0.12); border-color:var(--cyan); box-shadow:0 0 20px rgba(0,212,255,0.2); }
+
+    /* ── FOOTER ── */
+    footer {
+      position:relative; z-index:1; text-align:center;
+      padding:40px 20px; background:rgba(0,0,14,0.95);
+      font-family:'JetBrains Mono',monospace; font-size:0.6rem;
+      letter-spacing:3px; color:rgba(255,255,255,0.18);
+      text-transform:uppercase; border-top:1px solid rgba(255,255,255,0.04);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:600px){
+      #hero-top { padding:16px 20px; }
+      #hero-bottom { padding:0 20px 32px; flex-direction:column; align-items:flex-start; gap:12px; transition: opacity 0.4s ease; }
+      .hero-bottom-right { flex-direction:row; align-items:center; }
+      .hero-side-line { display:none; }
+      #scroll-hint { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <p id="loading-text">Inicializando...</p>
+    <div class="loading-bar-bg">
+      <div class="loading-bar-fill" id="loading-bar"></div>
+    </div>
+  </div>
+
+  <canvas id="webgl"></canvas>
+
+  <div id="hero-top">
+    <div class="hero-logo">W<strong>.</strong>JÚNIOR</div>
+    <div class="hero-status">
+      <div class="hero-status-dot"></div>
+      Disponível para projetos
+    </div>
+  </div>
+
+  <div class="hero-side-line">
+    <div class="side-line-bar"></div>
+    <div class="side-line-text">São Luís · MA · 2025</div>
+    <div class="side-line-bar"></div>
+  </div>
+
+  <div id="hero-bottom">
+    <div class="hero-bottom-left">
+      <div class="hero-subtitle">Walterlin Júnior</div>
+      <div class="hero-name">PORTFOLIO<br>DEV</div>
+      <div id="typed-role"></div>
+    </div>
+    <div class="hero-bottom-right">
+      <span class="badge">Eng. de Computação</span>
+      <div class="hero-line"></div>
+    </div>
+  </div>
+
+  <div id="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-box"><div class="scroll-dot"></div></div>
+  </div>
+
+  <div id="watermark">PORTFOLIO<br>DEV</div>
+
+  <main>
+
+    <div class="section" id="competencias">
+      <p class="section-label reveal">// o que eu faço</p>
+      <h2 class="reveal">Minhas <span>competências</span></h2>
+      <p class="reveal">Desenvolvo soluções completas — do código ao resultado visual — usando tecnologia e IA para entregar mais rápido e melhor.</p>
+      <div class="cards-grid">
+        <div class="card reveal">
+          <span class="card-icon">⚙️</span>
+          <h3>Engenharia de Software</h3>
+          <p>Sites, apps mobile e sistemas completos para lojas, projetos e empresas. Do protótipo ao deploy, com foco em performance e experiência.</p>
+          <span class="card-tag">Web · Mobile · Sistemas</span>
+        </div>
+        <div class="card reveal">
+          <span class="card-icon">🎬</span>
+          <h3>VFX & Motion</h3>
+          <p>Edições com efeitos visuais e motion graphics para marcas, lojas e criadores. Do conceito ao render final, com atenção a cada detalhe.</p>
+          <span class="card-tag">VFX · Motion · Composição</span>
+        </div>
+        <div class="card reveal">
+          <span class="card-icon">🤖</span>
+          <h3>IA Aplicada</h3>
+          <p>Integro inteligência artificial em todos os projetos. Automação, geração de conteúdo, análise — IA como ferramenta real, não palavra-chave.</p>
+          <span class="card-tag">LLMs · Automação · Produção</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="projetos">
+      <p class="section-label reveal">// projetos</p>
+      <h2 class="reveal">Trabalhos <span>em destaque</span></h2>
+      <p class="reveal">Cada projeto aqui resolveu um problema real — seja para uma empresa, para a cidade ou para contar uma história.</p>
+
+      <div class="projects-wrapper">
+
+        <div class="project-card reveal" style="border-color:rgba(0,212,255,0.25);">
+          <div class="project-card-header" style="background:rgba(0,212,255,0.03);">
+            <div class="project-card-header-left">
+              <span class="project-category">Experiência 3D · Portfólio interativo · Você está aqui</span>
+              <h3>Portfolio Dev <span style="color:var(--cyan);font-size:0.9rem;">← este site</span></h3>
+              <p class="project-subtitle">Um portfólio que você não só vê — você navega por dentro. Astronauta, Terra, espaço em tempo real.</p>
+            </div>
+            <span class="project-status-badge status-live">Ao vivo</span>
+          </div>
+          <div class="project-card-body">
+            <div class="project-text">
+              <p>Em vez de criar "mais um site de portfólio", decidi transformar minha apresentação profissional em uma experiência espacial. Quem entra aqui encontra um astronauta em queda livre. Conforme desce a página, a Terra se aproxima ao fundo — como se a câmera estivesse viajando pelo espaço junto com você. <strong style="color:rgba(255,255,255,0.75)">Você está vivendo esse projeto agora mesmo.</strong></p>
+              <ul class="project-bullets">
+                <li>Primeira impressão forte, diferente de qualquer portfólio convencional.</li>
+                <li>Conta uma história visual enquanto você navega.</li>
+                <li>Mostra como uno código, 3D e design em um único projeto.</li>
+              </ul>
+              <div class="project-made-by">
+                <strong>O que eu fiz:</strong><br>
+                Modelagem 3D no Blender, integração Three.js, efeitos de scroll, toda a interface e narrativa. IA como parceira em todo o processo.
+              </div>
+              <div class="tech-stack">
+                <span class="tech-tag">Three.js</span>
+                <span class="tech-tag">WebGL</span>
+                <span class="tech-tag">Blender</span>
+                <span class="tech-tag">JavaScript</span>
+                <span class="tech-tag">IA assistida</span>
+              </div>
+            </div>
+            
+            <div class="project-mockups">
+              <div class="mockups-gallery">
+                <div class="mockups-top">
+                  <div class="mockup-device tablet">
+                    <div class="mockup-frame">
+                      <img src="print-tablet.png" alt="Print do Portfolio no Tablet">
+                    </div>
+                    <div class="mockup-label">Tablet</div>
+                  </div>
+                  <div class="mockup-device mobile">
+                    <div class="mockup-frame">
+                      <img src="print-mobile.png" alt="Print do Portfolio no Mobile">
+                    </div>
+                    <div class="mockup-label">Mobile</div>
+                  </div>
+                </div>
+                <div class="mockup-device desktop">
+                  <div class="mockup-frame">
+                    <img src="print-pc.png" alt="Print do Portfolio no Desktop">
+                  </div>
+                  <div class="mockup-label">Desktop</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-card-header">
+            <div class="project-card-header-left">
+              <span class="project-category">Projeto acadêmico · Mapa interativo · Cidadania</span>
+              <h3>De Olho na Ilha</h3>
+              <p class="project-subtitle">Mapa colaborativo onde moradores de São Luís apontam problemas da cidade e ajudam a cobrar soluções.</p>
+            </div>
+            <span class="project-status-badge status-done">Concluído</span>
+          </div>
+          <div class="project-card-body">
+            <div class="project-text">
+              <p>Nasceu dentro da universidade com um objetivo simples: dar voz a quem mora em São Luís. Qualquer pessoa pode abrir o mapa, marcar exatamente onde está o problema — um buraco na rua, uma luz queimada, um ponto inseguro — e registrar um relato. Tudo aparece organizado por categoria, criando uma visão clara da cidade.</p>
+              <ul class="project-bullets">
+                <li>Reúne num só mapa o que antes ficava espalhado em grupos e redes sociais.</li>
+                <li>Mostra padrões: quais bairros concentram mais problemas e de que tipo.</li>
+                <li>Cria uma ponte visual entre quem reclama e quem pode resolver.</li>
+              </ul>
+              <div class="project-made-by">
+                <strong>O que eu fiz:</strong><br>
+                Idealizei, desenhei o fluxo e desenvolvi em Java com integração de mapa interativo. Usei IA (Gemini) como apoio no desenvolvimento.
+              </div>
+              <div class="tech-stack">
+                <span class="tech-tag">Java</span>
+                <span class="tech-tag">Mapa interativo</span>
+                <span class="tech-tag">Gemini AI</span>
+              </div>
+            </div>
+            
+            <div class="project-mockups">
+              <div class="stacked-gallery">
+                <div class="mockup-device desktop">
+                  <div class="mockup-frame">
+                    <img src="doi-pc1.png" alt="De Olho na Ilha Print 1">
+                  </div>
+                </div>
+                <div class="mockup-device desktop">
+                  <div class="mockup-frame">
+                    <img src="doi-pc2.png" alt="De Olho na Ilha Print 2">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-card-header">
+            <div class="project-card-header-left">
+              <span class="project-category">Sistema interno · Gestão de contratos · CAEMA</span>
+              <h3>SIC-DO</h3>
+              <p class="project-subtitle">Sistema que substituiu planilhas por uma plataforma completa de gestão para a Diretoria de Operação da CAEMA.</p>
+            </div>
+            <span class="project-status-badge status-wip">70% concluído</span>
+          </div>
+          <div class="project-card-body">
+            <div class="project-text">
+              <p>A Diretoria de Operação da CAEMA controlava contratos importantes usando basicamente planilhas. Prazos se perdiam, informações ficavam espalhadas. Me chamaram para mudar isso. O SIC-DO centraliza contratos, finanças, processos e geração de atas em um único sistema pensado para o dia a dia da equipe.</p>
+              <ul class="project-bullets">
+                <li>Elimina a dependência de planilhas para controle de contratos e finanças.</li>
+                <li>Gera atas de reunião dentro do próprio sistema.</li>
+                <li>Aumenta a segurança dos dados e facilita qualquer consulta.</li>
+              </ul>
+              <div class="project-made-by">
+                <strong>O que eu fiz:</strong><br>
+                Desenvolvimento completo em TypeScript com base de dados no Supabase. Do design das telas até toda a lógica de funcionamento.
+              </div>
+              <div class="tech-stack">
+                <span class="tech-tag">TypeScript</span>
+                <span class="tech-tag">Supabase</span>
+                <span class="tech-tag">Sistema web</span>
+              </div>
+            </div>
+            
+            <div class="project-mockups">
+              <div class="stacked-gallery">
+                <div class="mockup-device desktop">
+                  <div class="mockup-frame">
+                    <img src="sicdo-pc-1.png" alt="SIC-DO Print 1">
+                  </div>
+                </div>
+                <div class="mockup-device desktop">
+                  <div class="mockup-frame">
+                    <img src="sicdo-pc-2.png" alt="SIC-DO Print 2">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-card-header">
+            <div class="project-card-header-left">
+              <span class="project-category">Social Media · Edição de Vídeo · Marketing</span>
+              <h3>Marketing Odontológico</h3>
+              <p class="project-subtitle">Estratégia visual e vídeos dinâmicos para redes sociais de clínica odontológica, focados em captação de pacientes.</p>
+            </div>
+            <span class="project-status-badge status-live">No ar</span>
+          </div>
+          <div class="project-card-body">
+            <div class="project-text">
+              <p>O desafio aqui foi sair do padrão "engessado" que costuma dominar a área da saúde. Criei vídeos curtos para Instagram Reels e TikTok que geram conexão rápida, explicam procedimentos de forma clara e, o mais importante, prendem a atenção do paciente nos primeiros segundos.</p>
+              <ul class="project-bullets">
+                <li>Produção de conteúdo vertical focado em retenção (Reels e TikTok).</li>
+                <li>Edição com cortes dinâmicos, transições fluidas e legendas animadas.</li>
+                <li>Identidade visual alinhada com a seriedade e modernidade da clínica.</li>
+              </ul>
+              <div class="project-made-by">
+                <strong>O que eu fiz:</strong><br>
+                Edição de vídeo completa, animação de textos, motion graphics e color grading para uniformizar a estética da clínica.
+              </div>
+              <div class="tech-stack">
+                <span class="tech-tag">Edição de vídeo</span>
+                <span class="tech-tag">Motion graphics</span>
+                <span class="tech-tag">Color grading</span>
+              </div>
+            </div>
+            
+            <div class="project-mockups" style="display: flex; flex-direction: row; justify-content: center; gap: 24px; flex-wrap: wrap;">
+              <div class="mockup-device mobile" style="width: 100%; max-width: 220px; aspect-ratio: 9/19; margin: 0;">
+                <div class="mockup-frame">
+                  <video src="video/odonto1.mp4" autoplay muted loop playsinline></video>
+                </div>
+                <div class="mockup-label">Reels 1</div>
+              </div>
+              <div class="mockup-device mobile" style="width: 100%; max-width: 220px; aspect-ratio: 9/19; margin: 0;">
+                <div class="mockup-frame">
+                  <video src="video/odonto2.mp4" autoplay muted loop playsinline></video>
+                </div>
+                <div class="mockup-label">Reels 2</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-card-header">
+            <div class="project-card-header-left">
+              <span class="project-category">VFX · Motion · Edição de vídeo</span>
+              <h3>VFX na prática</h3>
+              <p class="project-subtitle">Edições com efeitos visuais para marcas e projetos autorais — onde cada frame é pensado para causar impacto.</p>
+            </div>
+            <span class="project-status-badge status-done">Portfólio VFX</span>
+          </div>
+          <div class="project-card-body">
+            <div class="project-text">
+              <p>Gosto de tratar vídeo como experiência, não só como edição. Em cada trabalho combino composição, motion graphics e pós-produção para dar mais vida às cenas. O foco é sempre o mesmo: transmitir a ideia de forma clara, com um visual que prende a atenção logo nos primeiros segundos.</p>
+              <ul class="project-bullets">
+                <li>Edições pensadas para redes sociais e campanhas locais.</li>
+                <li>Motion graphics para destacar marcas e mensagens-chave.</li>
+                <li>VFX na medida certa, sem fugir da identidade de cada projeto.</li>
+              </ul>
+              <div class="project-made-by">
+                <strong>O que eu faço:</strong><br>
+                Do material bruto à montagem final. Animações, VFX, correção de cor e IA em etapas criativas.
+              </div>
+              <div class="tech-stack">
+                <span class="tech-tag">Composição</span>
+                <span class="tech-tag">Color grading</span>
+                <span class="tech-tag">VFX</span>
+                <span class="tech-tag">IA assistida</span>
+              </div>
+            </div>
+            
+            <div class="project-mockups">
+              <div class="vfx-gallery">
+                <div class="video-frame">
+                  <video src="video/VFX1.mp4" autoplay muted loop playsinline preload="metadata"></video>
+                </div>
+                <div class="video-frame vertical">
+                  <video src="video/vfx2.mp4" autoplay muted loop playsinline preload="metadata"></video>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="section" id="contato">
+      <p class="section-label reveal">// contato</p>
+      <h2 class="reveal">Vamos <span>conversar</span></h2>
+      <p class="reveal">Tem um projeto em mente? Me chama — vamos transformar sua ideia em realidade.</p>
+      <div class="contact-links reveal">
+        <a class="contact-btn" href="mailto:walterlinpiresnjr@gmail.com">✉ Email</a>
+        <a class="contact-btn" href="https://www.linkedin.com/in/walterlin-júnior-2a2762329" target="_blank">in LinkedIn</a>
+        <a class="contact-btn" href="https://github.com/TerlinJunior" target="_blank">⌥ GitHub</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>&copy; 2025 · Walterlin Junior · Feito com Three.js + IA</footer>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ── LOADING ──────────────────────────────────────────────
+    const loadingEl  = document.getElementById('loading');
+    const loadingBar = document.getElementById('loading-bar');
+    const loadingTxt = document.getElementById('loading-text');
+    const scrollHint = document.getElementById('scroll-hint');
+
+    let modelsLoaded = 0;
+    const totalModels = 2;
+    function onModelLoaded() {
+      modelsLoaded++;
+      loadingBar.style.width = (modelsLoaded / totalModels * 100) + '%';
+      if (modelsLoaded === totalModels) {
+        loadingTxt.textContent = 'Pronto.';
+        setTimeout(() => loadingEl.classList.add('hidden'), 700);
+      }
+    }
+
+    // ── CENA ─────────────────────────────────────────────────
+    const canvas = document.getElementById('webgl');
+    const scene  = new THREE.Scene();
+    scene.background = new THREE.Color(0x00000f);
+
+    const camera = new THREE.PerspectiveCamera(
+      48, window.innerWidth / window.innerHeight, 0.1, 1000
+    );
+    camera.position.set(0, 0, 10);
+    scene.add(camera);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    // ── LUZES ────────────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+    sun.position.set(6, 10, 8);
+    scene.add(sun);
+    const fill = new THREE.DirectionalLight(0x3366ff, 0.4);
+    fill.position.set(-8, -4, -4);
+    scene.add(fill);
+
+    // ── ESTRELAS FIXAS ───────────────────────────────────────
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(2500 * 3);
+    for (let i = 0; i < starPos.length; i++) starPos[i] = (Math.random() - 0.5) * 400;
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.14, sizeAttenuation: true,
+      transparent: true, opacity: 0.85,
+    }));
+    scene.add(stars);
+
+    // ── ESTRELAS CADENTES ────────────────────────────────────
+    const shootingStars = [];
+    function resetShootingStar(s) {
+      s.startX=10+Math.random()*40; s.startY=12+Math.random()*10;
+      s.startZ=-20-Math.random()*25;
+      s.dirX=-(0.9+Math.random()*0.4); s.dirY=-(0.6+Math.random()*0.3);
+      s.length=2+Math.random()*3; s.speed=2.5+Math.random()*1.5;
+      s.progress=0; s.active=true; s.delay=8+Math.random()*12;
+      s.line.material.opacity=0;
+    }
+    for (let i = 0; i < 2; i++) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0 }));
+      scene.add(line);
+      const s = { line, active:false, progress:0, speed:0, startX:0, startY:0, startZ:0, dirX:0, dirY:0, length:0, delay:3+i*5+Math.random()*6 };
+      resetShootingStar(s); s.active=false;
+      shootingStars.push(s);
+    }
+    function updateShootingStars(delta) {
+      shootingStars.forEach((s) => {
+        if (!s.active) { s.delay-=delta; if(s.delay<=0) resetShootingStar(s); return; }
+        s.progress+=delta*s.speed;
+        const p=s.progress, fx=s.startX+s.dirX*p, fy=s.startY+s.dirY*p, tl=Math.min(p,s.length);
+        const pa=s.line.geometry.attributes.position;
+        pa.setXYZ(0,fx-s.dirX*tl,fy-s.dirY*tl,s.startZ);
+        pa.setXYZ(1,fx,fy,s.startZ); pa.needsUpdate=true;
+        const life=p/(s.length+4);
+        s.line.material.opacity=(life<0.15?life/0.15:life>0.7?1-(life-0.7)/0.3:1)*0.6;
+        if(p>s.length+6){ s.active=false; s.delay=8+Math.random()*12; s.line.material.opacity=0; }
+      });
+    }
+
+    // ── MODELOS ──────────────────────────────────────────────
+    const loader = new GLTFLoader();
+    let astro = null, mixer = null, earth = null;
+
+    loader.load('models/astronaut.glb', (gltf) => {
+      astro = gltf.scene;
+      const box    = new THREE.Box3().setFromObject(astro);
+      const center = box.getCenter(new THREE.Vector3());
+      const size   = box.getSize(new THREE.Vector3());
+      astro.position.sub(center);
+      astro.scale.setScalar(2.0 / Math.max(size.x, size.y, size.z));
+
+      // deitado de lado — sem rotação no Y (não gira mais)
+      astro.rotation.set(-1.2, 0.4, 1.2);
+      astro.position.set(0.5, 0.5, 2);
+
+      if (gltf.animations?.length) {
+        mixer = new THREE.AnimationMixer(astro);
+        gltf.animations.forEach(c => mixer.clipAction(c).play());
+      }
+      scene.add(astro);
+      onModelLoaded();
+    },
+    () => { loadingTxt.textContent = 'Carregando astronauta...'; },
+    (e) => { console.error(e); onModelLoaded(); });
+
+    loader.load('models/earth.glb', (gltf) => {
+      earth = gltf.scene;
+      const box    = new THREE.Box3().setFromObject(earth);
+      const center = box.getCenter(new THREE.Vector3());
+      const size   = box.getSize(new THREE.Vector3());
+      earth.position.sub(center);
+      const scale = 1.2 / Math.max(size.x, size.y, size.z);
+      earth.scale.setScalar(scale);
+      earth.userData.baseScale = scale;
+      earth.position.set(0, -1.5, -40);
+      scene.add(earth);
+      onModelLoaded();
+    },
+    () => { loadingTxt.textContent = 'Carregando Terra...'; },
+    (e) => { console.error(e); onModelLoaded(); });
+
+    // ── SCROLL ───────────────────────────────────────────────
+    let scrollProgress = 0;
+    const heroBottom = document.getElementById('hero-bottom');
+
+    window.addEventListener('scroll', () => {
+      const max = document.body.scrollHeight - window.innerHeight;
+      scrollProgress = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+      scrollHint.style.opacity = window.scrollY > 80 ? '0' : '1';
+
+      if (window.innerWidth <= 600) {
+        const scrollY   = window.scrollY || 0;
+        const threshold = 140; 
+        if (scrollY < threshold) {
+          heroBottom.style.opacity = String(1 - scrollY / threshold);
+        } else {
+          heroBottom.style.opacity = '0';
+        }
+      } else {
+        heroBottom.style.opacity = '1';
+      }
+    });
+
+    let mouseX = 0, mouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    function easeInOut(t) { return t<0.5?2*t*t:-1+(4-2*t)*t; }
+
+    // ── WATERMARK ────────────────────────────────────────────
+    const wm = document.getElementById('watermark');
+    function updateWatermark() {
+      const sp = easeInOut(Math.min(scrollProgress * 3, 1));
+      wm.style.opacity  = String(sp * 0.18);
+      wm.style.fontSize = (13 + (1 - sp) * 4) + 'px';
+    }
+
+    // ── REVEAL ───────────────────────────────────────────────
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer  = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting)
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      });
+    }, { threshold: 0.1 });
+    revealEls.forEach(el => observer.observe(el));
+
+    // ── TYPING ───────────────────────────────────────────────
+    const roles = ['Engenheiro de Software','Especialista em VFX & Motion','Integrador de IA','Desenvolvedor Full Stack'];
+    let roleIdx=0, charIdx=0, deleting=false;
+    const typedEl = document.getElementById('typed-role');
+    function typeLoop() {
+      const cur = roles[roleIdx];
+      if (!deleting) {
+        typedEl.textContent = cur.slice(0, ++charIdx);
+        if (charIdx===cur.length) { deleting=true; setTimeout(typeLoop,1800); return; }
+        setTimeout(typeLoop, 70);
+      } else {
+        typedEl.textContent = cur.slice(0, --charIdx);
+        if (charIdx===0) { deleting=false; roleIdx=(roleIdx+1)%roles.length; setTimeout(typeLoop,400); return; }
+        setTimeout(typeLoop, 38);
+      }
+    }
+    typeLoop();
+
+    // ── LOOP ─────────────────────────────────────────────────
+    const clock = new THREE.Clock();
+    function tick() {
+      requestAnimationFrame(tick);
+      const delta = clock.getDelta();
+      const t     = clock.elapsedTime;
+      const sp    = easeInOut(scrollProgress);
+
+      if (mixer) mixer.update(delta);
+      updateShootingStars(delta);
+      updateWatermark();
+
+      if (astro) {
+        astro.position.y = 0.5
+          + Math.sin(t * 0.8) * 0.22
+          + Math.sin(t * 0.35) * 0.09;
+
+        astro.position.x = 0.5
+          + Math.sin(t * 0.55) * 0.12;
+
+        astro.rotation.x = -1.2 + Math.sin(t * 0.4) * 0.07;
+        astro.rotation.z =  1.2 + Math.sin(t * 0.6) * 0.09;
+        astro.rotation.y = 0.4 + Math.sin(t * 0.25) * 0.04;
+
+        if (scrollProgress < 0.05) {
+          astro.position.x += mouseX * 0.15;
+          astro.position.y += mouseY * -0.08;
+        }
+
+        astro.position.z = THREE.MathUtils.lerp(2, 18, sp);
+        const opacity = sp < 0.35 ? 1 : Math.max(0, 1-(sp-0.35)/0.2);
+        astro.traverse((child) => {
+          if (child.isMesh && child.material) {
+            child.material.transparent = true;
+            child.material.opacity     = opacity;
+            child.material.needsUpdate = true;
+          }
+        });
+      }
+
+      if (earth) {
+        const base = earth.userData.baseScale || 0.4;
+        earth.rotation.y = t * 0.10;
+        earth.position.z = THREE.MathUtils.lerp(-40, -2, sp);
+        earth.position.y = THREE.MathUtils.lerp(-1.5, 0.2, sp);
+        earth.scale.setScalar(base * THREE.MathUtils.lerp(1, 7.0, sp));
+      }
+
+      stars.rotation.y = t * 0.003;
+      stars.rotation.x = t * 0.0015;
+      renderer.render(scene, camera);
+    }
+    tick();
+
+    // ── RESIZE ───────────────────────────────────────────────
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const allVideos = document.querySelectorAll('video');
+
+      allVideos.forEach(video => {
+        // Tenta forçar o play no carregamento
+        video.play().catch(err => {
+          console.warn("Autoplay bloqueado pelo navegador:", err);
+        });
+
+        // Clique para ver completo/ouvir/pausar
+        video.addEventListener('click', function(e) {
+          if (this.muted) {
+            this.muted = false;       // Tira o mudo
+            this.currentTime = 0;     // Reinicia
+            this.controls = true;     // Mostra os controles
+            this.play();              // Toca o vídeo
+          } else {
+            // Se já não estiver mutado, gerencia play/pause
+            if (this.paused) {
+              this.play();
+            } else {
+              this.pause();
+            }
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
